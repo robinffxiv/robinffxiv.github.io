@@ -20,8 +20,8 @@ function testing_smth(): void {
 }
 
 function do_ea(): void {
-    const popSize: number = 100;
-    const keepBestNum: number = 50;
+    const popSize: number = 500;
+    const keepBestNum: number = 100;
     const numPops = 5;
 
     const startTime = new Date().getTime();
@@ -48,7 +48,7 @@ function do_ea(): void {
 
     let lastBestFitness: number = -9999999;
     let stuckCount: number = 0;
-    const maxStuck: number = 20;
+    const maxStuck: number = 50;
 
     // Go until we time out or break (by reaching the goal)
     while (new Date().getTime() - startTime < 1000 * 600) {
@@ -67,13 +67,15 @@ function do_ea(): void {
         if (bestSim.quality >= initialState.recipe.quality && bestSim.progress >= initialState.recipe.progress) {
             break;
         }
-        console.log(bestSim.printStatus() + "Fitness: " + fitness(bestSim));
+        // console.log(bestSim.printStatus() + "Fitness: " + fitness(bestSim));
+        console.log(bestSims.map((s) => fitness(s)));
 
         if (fitness(bestSim) === lastBestFitness) {stuckCount++;}
         else {lastBestFitness = fitness(bestSim); stuckCount = 0;}
 
         // If we're stuck (best fitness hasn't improved for many rounds)
         if (stuckCount >= maxStuck) {
+            console.log("Got stuck")
             // Cross over populations by shuffling them up!
             let allSims: Simulation[] = multiPops.flat();
             allSims = allSims
@@ -81,43 +83,14 @@ function do_ea(): void {
                 .sort((a, b) => a.sort - b.sort)
                 .map(({ value }) => value);
             for (let i = 0; i < numPops; i++) {
-                multiPops[i] = allSims.slice(i * popSize, (i + 1) * popSize);
+                multiPops[i] = allSims.slice(i * keepBestNum, (i + 1) * keepBestNum);
             }
             stuckCount = 0;
         }
 
-        // Iterate through populations and
+        // Iterate through populations and spawn new offspring for them
         for (let n = 0; n < numPops; n++) {
             let population = multiPops[n];
-
-            // population = population.map((m) => cleanUseless(m, initialState));
-            /*if (fitness(population[0]) === lastBestFitness) {
-                stuckCount++;
-            }
-            else {
-                lastBestFitness = fitness(population[0]);
-                stuckCount = 0;
-            }
-
-            if (stuckCount >= 50) {
-                crossProb = 1;
-                mutProb = 1;
-                const bestFew = population.slice(0, Math.floor(keepBestNum / 4));
-                population = population.slice(Math.ceil(keepBestNum / 4));
-                population = population
-                    .map((value) => ({ value, sort: Math.random() }))
-                    .sort((a, b) => a.sort - b.sort)
-                    .map(({ value }) => value);
-                population = bestFew.concat(population.slice(Math.ceil(3 * keepBestNum / 4)));
-                while (population.length < keepBestNum) {
-                    population.push(randomRollout(initialState.clone()));
-                }
-            }
-            else {
-                crossProb = 0.75;
-                mutProb = 0.5;
-            }*/
-
             let offspring: Simulation[] = [];
             while (population.length + offspring.length < popSize) {
                 offspring = offspring.concat(spawn(initialState, population, crossProb, mutProb));
