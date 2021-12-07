@@ -18,16 +18,14 @@ export class DelicateSynthesis extends Action {
         if (sim.buffs[Buff.INNOVATION] > 0) {
             qualBuffs += 50;
         }
-        if (this.succeeded(sim)) {
-            sim.removeBuff(Buff.MUSCLE_MEMORY);
-            sim.progress += this.progressAdded(sim, progBuffs);
-            sim.removeBuff(Buff.GREAT_STRIDES);
-            sim.quality += this.qualityAdded(sim, qualBuffs);
-            const iq_stacks: number = sim.buffs[Buff.INNER_QUIET];
-            if (iq_stacks > 0) {
-                sim.buffs[Buff.INNER_QUIET] = Math.min(iq_stacks + this.iqStacksAdded(), 11);
-            }
-        }
+
+        sim.removeBuff(Buff.MUSCLE_MEMORY);
+        sim.progress += Math.floor(this.progressAdded(sim, progBuffs));
+        sim.removeBuff(Buff.GREAT_STRIDES);
+        sim.quality += Math.floor(this.qualityAdded(sim, qualBuffs));
+        const iq_stacks: number = sim.hasBuff(Buff.INNER_QUIET) ? sim.buffs[Buff.INNER_QUIET] : 0;
+        sim.buffs[Buff.INNER_QUIET] = Math.min(iq_stacks + this.iqStacksAdded(), 10);
+
         if (sim.buffs[Buff.FINAL_APPRAISAL] > 0) {
             sim.progress = Math.min(sim.progress, sim.recipe.progress - 1);
         }

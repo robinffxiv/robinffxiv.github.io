@@ -1,23 +1,23 @@
 import {Simulation} from "../../simulation";
 import {Buff} from "../../buffs";
-import {QualAction} from "../qualAction";
+import {QualityAction} from "../qualityAction";
 
-export class Reflect extends QualAction {
+export class Reflect extends QualityAction {
     override getPotency(sim: Simulation): number {
         return 100;
     };
 
     override cpCost(sim: Simulation): number {
-        return 24;
+        return 6;
     };
 
     override isUsable(sim: Simulation): boolean {
         return sim.actionsUsed.length === 0 && super.isUsable(sim);
     };
 
-    override buffApplied(): [Buff, number] | undefined {
-        return [Buff.INNER_QUIET, 3];
-    };
+    override iqStacksAdded(): number {
+        return 2;
+    }
 
     override getName(): string {
         return "Reflect";

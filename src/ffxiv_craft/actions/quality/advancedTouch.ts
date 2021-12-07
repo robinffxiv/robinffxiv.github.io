@@ -1,16 +1,17 @@
 import {Simulation} from "../../simulation";
 import {QualityAction} from "../qualityAction";
+import {StandardTouch} from "./standardTouch";
 
-export class BasicTouch extends QualityAction {
+export class AdvancedTouch extends QualityAction {
     override getPotency(sim: Simulation): number {
-        return 100;
+        return 150;
     };
 
     override cpCost(sim: Simulation): number {
-        return 18;
+        return sim.lastAction() === new StandardTouch().getName() ? 18 : 46;
     };
 
     override getName(): string {
-        return "Basic Touch";
+        return "Advanced Touch";
     }
 }

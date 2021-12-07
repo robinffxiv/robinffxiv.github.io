@@ -1,8 +1,8 @@
 import {Simulation} from "../../simulation";
 import {Observe} from "../other/observe";
-import {QualAction} from "../qualAction";
+import {QualityAction} from "../qualityAction";
 
-export class FocusedTouch extends QualAction {
+export class FocusedTouch extends QualityAction {
     override getPotency(sim: Simulation): number {
         return 150;
     };
@@ -11,12 +11,8 @@ export class FocusedTouch extends QualAction {
         return 18;
     };
 
-    override successRate(sim: Simulation): number {
-        return sim.lastAction() === new Observe().getName() ? 1 : 0.5;
-    };
-
-    canFail(): boolean {
-        return true;
+    override isUsable(sim: Simulation): boolean {
+        return sim.lastAction() === new Observe().getName() && super.isUsable(sim);
     }
 
     override getName(): string {

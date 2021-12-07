@@ -1,8 +1,8 @@
 import {Simulation} from "../../simulation";
 import {Buff} from "../../buffs";
-import {SynthAction} from "../synthAction";
+import {ProgressAction} from "../progressAction";
 
-export class MuscleMemory extends SynthAction {
+export class MuscleMemory extends ProgressAction {
     override getPotency(sim: Simulation): number {
         return 300;
     };

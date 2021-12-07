@@ -1,7 +1,7 @@
-import {SynthAction} from "../synthAction";
+import {ProgressAction} from "../progressAction";
 import {Simulation} from "../../simulation";
 
-export class BasicSynthesis extends SynthAction {
+export class BasicSynthesis extends ProgressAction {
     override getPotency(sim: Simulation): number {
         return 120;
     };

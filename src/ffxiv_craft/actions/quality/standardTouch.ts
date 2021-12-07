@@ -1,8 +1,8 @@
 import {Simulation} from "../../simulation";
 import {BasicTouch} from "./basicTouch";
-import {QualAction} from "../qualAction";
+import {QualityAction} from "../qualityAction";
 
-export class StandardTouch extends QualAction {
+export class StandardTouch extends QualityAction {
     override getPotency(sim: Simulation): number {
         return 125;
     };

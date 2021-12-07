@@ -1,33 +1,23 @@
-import {Action, Buff, Crafter, lvlToCLvl, possibleActions, Recipe, Simulation} from "./ffxiv_craft";
+import {Action, Crafter, possibleActions, Recipe, Simulation} from "./ffxiv_craft";
 import PriorityQueue from "ts-priority-queue";
-import {GreatStrides, Innovation, Manipulation, Veneration, WasteNot, WasteNotII} from "./ffxiv_craft/actions/buff";
-import {BasicTouch} from "./ffxiv_craft/actions/quality";
+import axios from "axios";
 
-const reliableActions = possibleActions.filter((a) => !a.canFail() && a.getName() !== "Final Appraisal" && a.getName() !== "Name of the Elements" && a.getName() !== "Brand of the Elements");
-
-export default function testing_main(): void {
-    do_ea()
+export default async function testing_main() {
+    await do_ea();
 }
 
-function testing_smth(): void {
-    const acs = ["Muscle Memory","Manipulation","Inner Quiet","Veneration","Groundwork","Delicate Synthesis","Innovation","Basic Touch","Basic Touch","Basic Touch","Basic Touch","Manipulation","Innovation","Basic Touch","Basic Touch","Basic Touch","Delicate Synthesis","Innovation","Basic Touch","Prudent Touch","Great Strides","Byregot's Blessing","Groundwork"];
-    const crafter = new Crafter(lvlToCLvl(80), 2769, 2904, 635, false);
-    const recipe = new Recipe(480, 70, 7414, 46553);
-    const initialState: Simulation = new Simulation(recipe, crafter);
 
-    const endState = applyActions(initialState, acs);
-    console.log(endState.printStatus());
-}
-
-function do_ea(): void {
-    const popSize: number = 500;
-    const keepBestNum: number = 100;
-    const numPops = 5;
+async function do_ea() {
+    const popSize: number = 100;
+    const keepBestNum: number = 50;
+    const numPops = 10;
 
     const startTime = new Date().getTime();
 
-    const crafter = new Crafter(lvlToCLvl(80), 2749, 2884, 620, false);
-    const recipe = new Recipe(510, 35, 5820, 46746);
+    const crafter = new Crafter(90, 2958, 1150, 569, true);
+    const recipe = await searchForRecipe("Dwarven Mythril Pikenstock")
+    if (recipe.name === "") {return;}
+    console.log(recipe);
     const initialState: Simulation = new Simulation(recipe, crafter);
 
     let multiPops: Simulation[][] = [];
@@ -43,8 +33,8 @@ function do_ea(): void {
 
     let itersDone = 0;
 
-    let crossProb = 0.65;
-    let mutProb = 0.4;
+    let crossProb = 0.6;
+    let mutProb = 0.8;
 
     let lastBestFitness: number = -9999999;
     let stuckCount: number = 0;
@@ -65,16 +55,16 @@ function do_ea(): void {
         bestSims.sort((a, b) => fitness(b) - fitness(a));
         const bestSim: Simulation = bestSims[0];
         if (bestSim.quality >= initialState.recipe.quality && bestSim.progress >= initialState.recipe.progress) {
-            break;
+            // break;
         }
-        // console.log(bestSim.printStatus() + "Fitness: " + fitness(bestSim));
-        console.log(bestSims.map((s) => fitness(s)));
+        console.log(bestSim.printStatus() + "Fitness: " + fitness(bestSim));
+        // console.log(bestSims.map((s) => fitness(s)));
 
         if (fitness(bestSim) === lastBestFitness) {stuckCount++;}
         else {lastBestFitness = fitness(bestSim); stuckCount = 0;}
 
         // If we're stuck (best fitness hasn't improved for many rounds)
-        if (stuckCount >= maxStuck) {
+        /*if (stuckCount >= maxStuck) {
             console.log("Got stuck")
             // Cross over populations by shuffling them up!
             let allSims: Simulation[] = multiPops.flat();
@@ -86,7 +76,7 @@ function do_ea(): void {
                 multiPops[i] = allSims.slice(i * keepBestNum, (i + 1) * keepBestNum);
             }
             stuckCount = 0;
-        }
+        }*/
 
         // Iterate through populations and spawn new offspring for them
         for (let n = 0; n < numPops; n++) {
@@ -153,7 +143,7 @@ function crossover(pop: any[][], crossProb: number): any[][] {
 }
 
 function mate(ind1: any[], ind2: any[]): [any[], any[]] {
-    const maxSubSeqLength = 3;
+    const maxSubSeqLength = 2;
     const seqLength1 = Math.min(ind1.length, randInt(maxSubSeqLength + 1));
     const seqLength2 = Math.min(ind2.length, randInt(maxSubSeqLength + 1));
     const end1 = ind1.length - seqLength1;
@@ -180,7 +170,7 @@ function mutate(pop: any[][], mutProb: number): any[][] {
 
 function mutate_indiv(individual: any[]): any[] {
     const maxSubSeqLength: number = 3;
-    const seqLength: number = Math.min(individual.length, Math.max(1, randInt(maxSubSeqLength + 1)));
+    const seqLength: number = Math.min(individual.length, randInt(maxSubSeqLength + 1));
     const end: number = individual.length - seqLength;
     const i: number = randInt(end + 1);
     // @ts-ignore
@@ -189,7 +179,7 @@ function mutate_indiv(individual: any[]): any[] {
 }
 
 function randomActionName(): string {
-    return reliableActions[randInt(reliableActions.length)].getName();
+    return possibleActions[randInt(possibleActions.length)].getName();
 }
 
 function randomActionSeq(maxLen: number): string[] {
@@ -203,8 +193,9 @@ function randomActionSeq(maxLen: number): string[] {
 
 function fitness(sim: Simulation): number {
     let f = 0;
-    if (!(sim.progress >=  sim.recipe.progress)) {f -= sim.recipe.quality / 2;}
-    return f + sim.quality + sim.cp * 2 - sim.actionsUsed.length * 5;
+    if (!(sim.progress >=  sim.recipe.progress)) {f -= sim.recipe.quality / 4;}
+    f -= Math.max(sim.quality - sim.recipe.quality, 0) * .5;
+    return f + sim.quality + sim.cp - sim.actionsUsed.length * sim.calcQuality(50);
 }
 
 function randomRollout(sim: Simulation): Simulation {
@@ -219,8 +210,8 @@ function randomRollout(sim: Simulation): Simulation {
 
 async function bare_mcts(): Promise<void> {
     console.log("Started process");
-    const crafter = new Crafter(lvlToCLvl(80), 2749, 2884, 610, false);
-    const recipe = new Recipe(480, 70, 7414, 46553);
+    const crafter = new Crafter(80, 2749, 2884, 610, false);
+    const recipe = new Recipe("", 480, 70, 7414, 46553, 1, 1);
     const initialSim: Simulation = new Simulation(recipe, crafter);
 
     let curr_state = initialSim.clone();
@@ -323,8 +314,8 @@ export async function tree(): Promise<void> {
 
     const frontier = new PriorityQueue({comparator: (a: SimNode, b: SimNode) => a.priority() - b.priority()});
 
-    const crafter = new Crafter(lvlToCLvl(80), 2749, 2884, 610, false);
-    const recipe = new Recipe(480, 70, 7414, 46553);
+    const crafter = new Crafter(80, 2749, 2884, 610, false);
+    const recipe = new Recipe("", 480, 70, 7414, 46553, 1, 1);
     const initialSim: Simulation = new Simulation(recipe, crafter);
 
     frontier.queue(new SimNode(initialSim));
@@ -389,9 +380,9 @@ function goal_test(sim: Simulation): boolean {
 
 function getPossibleActions(sim: Simulation): Action[] {
     if (terminal(sim)) {return [];}
-    return reliableActions.filter(filterAcs(sim));
+    return possibleActions.filter(a => a.isUsable(sim));
 }
-
+/*
 function filterAcs(sim: Simulation) {
 
     return function (a: Action): boolean {
@@ -407,6 +398,9 @@ function filterAcs(sim: Simulation) {
     }
 
 }
+
+
+ */
 
 function getSuccessors(sim: Simulation): Simulation[] {
     return getPossibleActions(sim).map((a) => sim.apply(a));
@@ -430,7 +424,7 @@ class SimNode {
 }
 
 function strToAction(o: string): Action {
-    return reliableActions.filter((a) => a.getName() === o)[0];
+    return possibleActions.filter((a) => a.getName() === o)[0];
 }
 
 function listToActions(acs: string[]): Action[] {
@@ -452,4 +446,22 @@ function randInt(maxExcl: number): number {
 function spliceArray(array: any[], index: number, howMany: number, replacement: any[]) {
     // @ts-ignore
     Array.prototype.splice.apply(array, [index, howMany].concat(replacement));
+}
+
+async function searchForRecipe(keyword: string): Promise<Recipe> {
+    const baseURL = "https://xivapi.com";
+    let recipeURL, data;
+    const r1 = await axios.get(baseURL + "/search?indexes=recipe&string=" + keyword)
+    try {
+        recipeURL = r1.data["Results"][0]["Url"];
+        const r2 = await axios.get(baseURL + recipeURL)
+        data = r2.data;
+        const rlt = data["RecipeLevelTable"]
+        return new Recipe(data["Name"], rlt["ClassJobLevel"], rlt["Durability"],
+            rlt["Difficulty"], rlt["Quality"],
+            rlt["ProgressDivider"], rlt["QualityDivider"]);
+    }
+    catch (e) {
+        return new Recipe("", 1, 1, 1, 1, 1, 1);
+    }
 }

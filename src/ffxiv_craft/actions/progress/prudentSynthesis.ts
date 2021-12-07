@@ -1,18 +1,18 @@
 import {Simulation} from "../../simulation";
 import {Buff} from "../../buffs";
-import {QualityAction} from "../qualityAction";
+import {ProgressAction} from "../progressAction";
 
-export class PrudentTouch extends QualityAction {
+export class PrudentSynthesis extends ProgressAction {
     override durabilityCost(): number {
         return 5;
     };
 
     override getPotency(sim: Simulation): number {
-        return 100;
+        return 180;
     };
 
     override cpCost(sim: Simulation): number {
-        return 25;
+        return 18;
     };
 
     override isUsable(sim: Simulation): boolean {
@@ -20,6 +20,6 @@ export class PrudentTouch extends QualityAction {
     };
 
     override getName(): string {
-        return "Prudent Touch";
+        return "Prudent Synthesis";
     };
 }

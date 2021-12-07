@@ -1,15 +1,14 @@
 import {Simulation} from "../../simulation";
 import {Buff} from "../../buffs";
-import {QualAction} from "../qualAction";
+import {QualityAction} from "../qualityAction";
 
-export class ByregotsBlessing extends QualAction {
+export class ByregotsBlessing extends QualityAction {
     override isUsable(sim: Simulation): boolean {
-        return sim.hasBuff(Buff.INNER_QUIET) && super.isUsable(sim);
+        return sim.buffs[Buff.INNER_QUIET] >= 2 && super.isUsable(sim);
     };
 
     override getPotency(sim: Simulation): number {
-        const stacks = sim.buffs[Buff.INNER_QUIET];
-        return stacks > 0 ? stacks * 20 + 80 : 100;
+        return 100 + sim.buffs[Buff.INNER_QUIET] * 20;
     };
 
     override cpCost(sim: Simulation): number {

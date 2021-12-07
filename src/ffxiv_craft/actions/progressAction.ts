@@ -2,7 +2,7 @@ import {Simulation} from "../simulation";
 import {Buff} from "../buffs";
 import {Action} from "./action";
 
-export abstract class SynthAction extends Action {
+export abstract class ProgressAction extends Action {
     override apply(sim: Simulation): void {
         let buffs = 100;
         if (sim.buffs[Buff.MUSCLE_MEMORY] > 0) {
@@ -11,10 +11,8 @@ export abstract class SynthAction extends Action {
         if (sim.buffs[Buff.VENERATION] > 0) {
             buffs += 50;
         }
-        if (this.succeeded(sim)) {
-            sim.removeBuff(Buff.MUSCLE_MEMORY);
-            sim.progress += this.progressAdded(sim, buffs);
-        }
+        sim.removeBuff(Buff.MUSCLE_MEMORY);
+        sim.progress += Math.floor(this.progressAdded(sim, buffs));
         if (sim.buffs[Buff.FINAL_APPRAISAL] > 0) {
             sim.progress = Math.min(sim.progress, sim.recipe.progress - 1);
         }

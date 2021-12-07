@@ -1,9 +1,9 @@
-import {SynthAction} from "../synthAction";
+import {ProgressAction} from "../progressAction";
 import {Simulation} from "../../simulation";
 
-export class CarefulSynthesis extends SynthAction {
+export class CarefulSynthesis extends ProgressAction {
     override getPotency(sim: Simulation): number {
-        return 150;
+        return 180;
     };
 
     override cpCost(sim: Simulation): number {

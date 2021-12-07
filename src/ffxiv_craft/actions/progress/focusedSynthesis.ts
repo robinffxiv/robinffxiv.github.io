@@ -1,19 +1,20 @@
 import {Simulation} from "../../simulation";
-import {SynthAction} from "../synthAction";
+import {ProgressAction} from "../progressAction";
 import {Observe} from "../other/observe";
 
-export class FocusedSynthesis extends SynthAction {
+export class FocusedSynthesis extends ProgressAction {
     override getPotency(sim: Simulation): number {
         return 200;
     };
 
-    override successRate(sim: Simulation): number {
-        return sim.lastAction() ===  new Observe().getName() ? 1 : 0.5;
-    };
-
-    override canFail(): boolean {
-        return true;
+    override cpCost(sim: Simulation): number {
+        return 5;
     }
+
+    override isUsable(sim: Simulation): boolean {
+        return sim.lastAction() === new Observe().getName() && super.isUsable(sim);
+    }
+
 
     override getName(): string {
         return "Focused Synthesis";
