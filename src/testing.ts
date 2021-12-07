@@ -1,5 +1,4 @@
 import {Action, Crafter, possibleActions, Recipe, Simulation} from "./ffxiv_craft";
-import PriorityQueue from "ts-priority-queue";
 import axios from "axios";
 
 export default async function testing_main() {
@@ -14,9 +13,12 @@ async function do_ea() {
 
     const startTime = new Date().getTime();
 
-    const crafter = new Crafter(90, 2958, 1150, 569, true);
+    const crafter = Crafter.create({lvl: 90, craftmanship: 2958, control: 1150, cp: 569});
     const recipe = await searchForRecipe("Dwarven Mythril Pikenstock")
-    if (recipe.name === "") {return;}
+    if (recipe.name === "") {
+        console.log("Couldn't find recipe");
+        return;
+    }
     console.log(recipe);
     const initialState: Simulation = new Simulation(recipe, crafter);
 
@@ -208,6 +210,7 @@ function randomRollout(sim: Simulation): Simulation {
 }
 
 
+/*
 async function bare_mcts(): Promise<void> {
     console.log("Started process");
     const crafter = new Crafter(80, 2749, 2884, 610, false);
@@ -249,7 +252,7 @@ async function bare_mcts(): Promise<void> {
         console.log(curr_state.printStatus());
     }
 
-}
+}*/
 
 function simulation_policy_child(sim: Simulation): Simulation {
     const poss: Action[] = getPossibleActions(sim);
@@ -306,6 +309,7 @@ class MCTSNode {
 
 }
 
+/*
 export async function tree(): Promise<void> {
 
     console.log("Started process");
@@ -315,7 +319,7 @@ export async function tree(): Promise<void> {
     const frontier = new PriorityQueue({comparator: (a: SimNode, b: SimNode) => a.priority() - b.priority()});
 
     const crafter = new Crafter(80, 2749, 2884, 610, false);
-    const recipe = new Recipe("", 480, 70, 7414, 46553, 1, 1);
+    const recipe = Recipe("", 480, 70, 7414, 46553, 1, 1);
     const initialSim: Simulation = new Simulation(recipe, crafter);
 
     frontier.queue(new SimNode(initialSim));
@@ -358,7 +362,7 @@ export async function tree(): Promise<void> {
     }
 
 
-};
+};*/
 
 function heuristic(sim: Simulation): number {
     const qualLeft = sim.recipe.quality - sim.quality;
@@ -457,11 +461,15 @@ async function searchForRecipe(keyword: string): Promise<Recipe> {
         const r2 = await axios.get(baseURL + recipeURL)
         data = r2.data;
         const rlt = data["RecipeLevelTable"]
-        return new Recipe(data["Name"], rlt["ClassJobLevel"], rlt["Durability"],
-            rlt["Difficulty"], rlt["Quality"],
-            rlt["ProgressDivider"], rlt["QualityDivider"]);
+        return Recipe.create({name: data["Name"],
+            lvl: rlt["ClassJobLevel"],
+            durability: rlt["Durability"],
+            progress: rlt["Difficulty"],
+            quality: rlt["Quality"],
+            progressDivisor: rlt["ProgressDivider"],
+            qualityDivisor: rlt["QualityDivider"]});
     }
     catch (e) {
-        return new Recipe("", 1, 1, 1, 1, 1, 1);
+        return Recipe.create({});
     }
 }

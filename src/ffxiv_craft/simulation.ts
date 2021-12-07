@@ -1,50 +1,22 @@
 import {Buff, Buffs} from "./buffs";
 import {Action} from "./actions";
+import {Data} from "dataclass";
 
-export class Crafter {
-    readonly lvl: number;
-    readonly craftmanship: number;
-    readonly control: number;
-    readonly cp: number;
-    readonly specialist: boolean;
-
-    constructor(lvl: number,
-                craftmanship: number,
-                control: number,
-                cp: number,
-                specialist: boolean) {
-        this.lvl = lvl;
-        this.craftmanship = craftmanship;
-        this.control = control;
-        this.cp = cp;
-        this.specialist = specialist;
-    }
+export class Crafter extends Data {
+    lvl: number = 1;
+    craftmanship: number = 0;
+    control: number = 0;
+    cp: number = 0;
 }
 
-export class Recipe {
-    readonly name: string
-    readonly lvl: number;
-    readonly durability: number;
-    readonly progress: number;
-    readonly quality: number;
-    readonly progressDivisor: number;
-    readonly qualityDivisor: number;
-
-    constructor(name: string,
-                lvl: number,
-                durability: number,
-                progress: number,
-                quality: number,
-                progressDivisor: number,
-                qualityDivisor: number) {
-        this.name = name;
-        this.lvl = lvl;
-        this.durability = durability;
-        this.progress = progress;
-        this.quality = quality;
-        this.progressDivisor = progressDivisor
-        this.qualityDivisor = qualityDivisor
-    };
+export class Recipe extends Data {
+    name: string = "";
+    lvl: number = 0;
+    durability: number = 10;
+    progress: number = 10;
+    quality: number = 10;
+    progressDivisor: number = 100;
+    qualityDivisor: number = 100;
 }
 
 export class Simulation {
@@ -103,11 +75,11 @@ export class Simulation {
     };
 
     calcProgress(n: number): number {
-        return (this.crafter.craftmanship * 10 / this.recipe.progressDivisor) + 2;
+        return n / 100 * (this.crafter.craftmanship * 10 / this.recipe.progressDivisor) + 2;
     };
 
     calcQuality(n: number): number {
-        return (this.iqControl() * 10 / this.recipe.qualityDivisor) + 35;
+        return n / 100 * (this.iqControl() * 10 / this.recipe.qualityDivisor) + 35;
     };
 
     iqControl(): number {
