@@ -1,9 +1,7 @@
 import {Simulation} from "../simulation";
-import {Buff, Buffs} from "../buffs";
+import {Buff} from "../buffs";
 
 export abstract class Action {
-    constructor() {
-    }
     apply(sim: Simulation): void {
         let used_dur = this.durabilityCost();
         if (sim.buffs[Buff.WASTE_NOT] > 0 || sim.buffs[Buff.WASTE_NOT_II] > 0) {used_dur /= 2;}

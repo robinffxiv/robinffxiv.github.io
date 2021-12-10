@@ -50,13 +50,13 @@ export class Simulation {
     clone(): Simulation {
         return new Simulation(this.recipe, this.crafter, this.cp, this.durability, this.progress,
             this.quality, {...this.buffs}, [...this.actionsUsed]);
-    }
+    };
     
     apply(a: Action): Simulation {
         const newSim = this.clone();
         a.apply(newSim);
         return newSim;
-    }
+    };
 
     printStatus(): string {
         let output = "Progress: " + this.progress +  " out of " + this.recipe.progress + "\n";
@@ -74,17 +74,12 @@ export class Simulation {
         return output;
     };
 
-    calcProgress(n: number): number {
-        return n / 100 * (this.crafter.craftmanship * 10 / this.recipe.progressDivisor) + 2;
+    baseProgress(): number {
+        return Math.floor(this.crafter.craftmanship * 10 / this.recipe.progressDivisor + 2);
     };
 
-    calcQuality(n: number): number {
-        return n / 100 * (this.iqControl() * 10 / this.recipe.qualityDivisor) + 35;
-    };
-
-    iqControl(): number {
-        if (!this.hasBuff(Buff.INNER_QUIET)) return this.crafter.control;
-        return this.crafter.control * ((this.buffs[Buff.INNER_QUIET] / 5) + 1);
+    baseQuality(): number {
+        return Math.floor(this.crafter.control * 10 / this.recipe.qualityDivisor + 35);
     };
 
     lastAction(): string {
@@ -93,16 +88,16 @@ export class Simulation {
 
     hasBuff(buff: Buff): boolean {
         return this.buffs[buff] !== undefined && this.buffs[buff] > 0;
-    }
+    };
 
     removeBuff(buff: Buff): void {
         delete this.buffs[buff];
-    }
+    };
 
     decrementBuff(buff: Buff): void {
         if (this.hasBuff(buff)) {
             if (this.buffs[buff] > 1) {this.buffs[buff] -= 1;}
             else {this.removeBuff(buff);}
         }
-    }
+    };
 }

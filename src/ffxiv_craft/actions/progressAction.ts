@@ -4,18 +4,15 @@ import {Action} from "./action";
 
 export abstract class ProgressAction extends Action {
     override apply(sim: Simulation): void {
-        let buffs = 100;
+        let buffs = 1;
         if (sim.buffs[Buff.MUSCLE_MEMORY] > 0) {
-            buffs += 100;
+            buffs += 1;
         }
         if (sim.buffs[Buff.VENERATION] > 0) {
-            buffs += 50;
+            buffs += .5;
         }
         sim.removeBuff(Buff.MUSCLE_MEMORY);
-        sim.progress += Math.floor(this.progressAdded(sim, buffs));
-        if (sim.buffs[Buff.FINAL_APPRAISAL] > 0) {
-            sim.progress = Math.min(sim.progress, sim.recipe.progress - 1);
-        }
+        sim.progress += this.progressAdded(sim, buffs);
         super.apply(sim);
     };
 
@@ -24,7 +21,7 @@ export abstract class ProgressAction extends Action {
     }
 
     progressAdded(sim: Simulation, buffs: number): number {
-        return sim.calcProgress(this.getPotency(sim) * buffs / 100);
+        return Math.floor(sim.baseProgress() * this.getPotency(sim) / 100 * buffs);
     };
 
     getPotency(sim: Simulation): number {

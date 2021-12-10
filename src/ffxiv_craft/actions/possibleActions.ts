@@ -1,5 +1,4 @@
 import {Action} from "./action";
-import {FinalAppraisal} from "./buff/finalAppraisal";
 import {GreatStrides} from "./buff/greatStrides";
 import {Innovation} from "./buff/innovation";
 import {Manipulation} from "./buff/manipulation";
@@ -24,8 +23,7 @@ import {Reflect} from "./quality/reflect";
 import {StandardTouch} from "./quality/standardTouch";
 import {TrainedFinesse} from "./quality/trainedFinesse";
 
-
-export const possibleActions: Action[] = [//new FinalAppraisal(),
+export const possibleActions: Action[] = [
     new GreatStrides(),
     new Innovation(),
     new Manipulation(),
@@ -49,4 +47,4 @@ export const possibleActions: Action[] = [//new FinalAppraisal(),
     new PrudentTouch(),
     new Reflect(),
     new StandardTouch(),
-    new TrainedFinesse()]
+    new TrainedFinesse()];

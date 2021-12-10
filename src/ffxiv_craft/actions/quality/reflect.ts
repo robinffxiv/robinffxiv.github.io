@@ -1,5 +1,4 @@
 import {Simulation} from "../../simulation";
-import {Buff} from "../../buffs";
 import {QualityAction} from "../qualityAction";
 
 export class Reflect extends QualityAction {

@@ -1,5 +1,4 @@
 import {Simulation} from "../../simulation";
-import {BasicTouch} from "./basicTouch";
 import {QualityAction} from "../qualityAction";
 import {Buff} from "../../buffs";
 

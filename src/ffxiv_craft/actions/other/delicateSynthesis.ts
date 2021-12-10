@@ -4,38 +4,39 @@ import {Simulation} from "../../simulation";
 
 export class DelicateSynthesis extends Action {
     override apply(sim: Simulation) {
-        let progBuffs = 100;
+        let progBuffs = 1;
         if (sim.buffs[Buff.MUSCLE_MEMORY] > 0) {
-            progBuffs += 100;
+            progBuffs += 1;
         }
         if (sim.buffs[Buff.VENERATION] > 0) {
-            progBuffs += 50;
+            progBuffs += .5;
         }
-        let qualBuffs = 100;
+        let qualBuffs = 1;
         if (sim.buffs[Buff.GREAT_STRIDES] > 0) {
-            qualBuffs += 100;
+            qualBuffs += 1;
         }
         if (sim.buffs[Buff.INNOVATION] > 0) {
-            qualBuffs += 50;
+            qualBuffs += .5;
+        }
+        if (sim.buffs[Buff.INNER_QUIET] > 0) {
+            qualBuffs *= 1 + sim.buffs[Buff.INNER_QUIET] * .1;
         }
 
         sim.removeBuff(Buff.MUSCLE_MEMORY);
-        sim.progress += Math.floor(this.progressAdded(sim, progBuffs));
+        sim.progress += this.progressAdded(sim, progBuffs);
+
         sim.removeBuff(Buff.GREAT_STRIDES);
-        sim.quality += Math.floor(this.qualityAdded(sim, qualBuffs));
+        sim.quality += this.qualityAdded(sim, qualBuffs);
         const iq_stacks: number = sim.hasBuff(Buff.INNER_QUIET) ? sim.buffs[Buff.INNER_QUIET] : 0;
         sim.buffs[Buff.INNER_QUIET] = Math.min(iq_stacks + this.iqStacksAdded(), 10);
 
-        if (sim.buffs[Buff.FINAL_APPRAISAL] > 0) {
-            sim.progress = Math.min(sim.progress, sim.recipe.progress - 1);
-        }
         super.apply(sim);
     }
     progressAdded(sim: Simulation, buffs: number): number {
-        return sim.calcProgress(this.getPotency() * buffs / 100);
+        return Math.floor(sim.baseProgress() * this.getPotency(sim) / 100 * buffs);
     };
     qualityAdded(sim: Simulation, buffs: number): number {
-        return sim.calcQuality(this.getPotency(sim) * buffs / 100);
+        return Math.floor(sim.baseQuality() * this.getPotency(sim) / 100 * buffs);
     };
     override durabilityCost(): number {
         return 10;
@@ -43,7 +44,7 @@ export class DelicateSynthesis extends Action {
     override cpCost(sim: Simulation): number {
         return 32;
     }
-    getPotency(sim?: Simulation): number {
+    getPotency(sim: Simulation): number {
         return 100;
     };
     iqStacksAdded() {
