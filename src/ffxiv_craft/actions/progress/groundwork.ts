@@ -4,8 +4,12 @@ import {Buff} from "../../buffs";
 
 export class Groundwork extends ProgressAction {
     override getPotency(sim: Simulation): number {
-        let eff: number = 360;
-        if (sim.hasBuff(Buff.WASTE_NOT) || sim.hasBuff(Buff.WASTE_NOT_II)) {eff /= 2;}
+        const eff: number = 360;
+        let durCost = this.durabilityCost();
+        if (sim.hasBuff(Buff.WASTE_NOT) || sim.hasBuff(Buff.WASTE_NOT_II)) {durCost /= 2;}
+        if (sim.durability < durCost)  {
+            return eff / 2;
+        }
         return eff;
     };
 

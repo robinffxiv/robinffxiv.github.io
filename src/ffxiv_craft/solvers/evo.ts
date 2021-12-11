@@ -2,9 +2,9 @@ import {Crafter, Recipe, Simulation} from "../simulation";
 import {applyActions, randInt, randomActionNameSeq, randomRollout} from "../util";
 
 export default function do_ea(crafter: Crafter, recipe: Recipe) {
-    const popSize: number = 100;
-    const keepBestNum: number = 50;
-    const numPops = 10;
+    const popSize: number = 1000;
+    const keepBestNum: number = 500;
+    const numPops = 1;
 
     const startTime = new Date().getTime();
 
@@ -12,7 +12,6 @@ export default function do_ea(crafter: Crafter, recipe: Recipe) {
         console.log("Couldn't find recipe");
         return;
     }
-    console.log(recipe);
     const initialState: Simulation = new Simulation(recipe, crafter);
 
     let multiPops: Simulation[][] = [];
@@ -33,7 +32,6 @@ export default function do_ea(crafter: Crafter, recipe: Recipe) {
 
     let lastBestFitness: number = -9999999;
     let stuckCount: number = 0;
-    const maxStuck: number = 50;
 
     // Go until we time out or break (by reaching the goal)
     while (new Date().getTime() - startTime < 1000 * 600) {
@@ -50,28 +48,13 @@ export default function do_ea(crafter: Crafter, recipe: Recipe) {
         bestSims.sort((a, b) => fitness(b) - fitness(a));
         const bestSim: Simulation = bestSims[0];
         if (bestSim.quality >= initialState.recipe.quality && bestSim.progress >= initialState.recipe.progress) {
-            // break;
+            break;
         }
-        console.log(bestSim.printStatus() + "Fitness: " + fitness(bestSim));
+        console.log(bestSim.printStatus(false) + "Fitness: " + fitness(bestSim));
         // console.log(bestSims.map((s) => fitness(s)));
 
         if (fitness(bestSim) === lastBestFitness) {stuckCount++;}
         else {lastBestFitness = fitness(bestSim); stuckCount = 0;}
-
-        // If we're stuck (best fitness hasn't improved for many rounds)
-        /*if (stuckCount >= maxStuck) {
-            console.log("Got stuck")
-            // Cross over populations by shuffling them up!
-            let allSims: Simulation[] = multiPops.flat();
-            allSims = allSims
-                .map((value) => ({ value, sort: Math.random() }))
-                .sort((a, b) => a.sort - b.sort)
-                .map(({ value }) => value);
-            for (let i = 0; i < numPops; i++) {
-                multiPops[i] = allSims.slice(i * keepBestNum, (i + 1) * keepBestNum);
-            }
-            stuckCount = 0;
-        }*/
 
         // Iterate through populations and spawn new offspring for them
         for (let n = 0; n < numPops; n++) {
@@ -89,14 +72,16 @@ export default function do_ea(crafter: Crafter, recipe: Recipe) {
         itersDone++;
     }
 
-    console.log("Iters done: " + itersDone);
-    console.log("Final result:")
+    console.log("Generations made: " + itersDone);
     console.log("Time elapsed: " + (new Date().getTime() - startTime) / 1000)
+
+    console.log("Final result:")
 
     const bestSims: Simulation[] = multiPops.map((pop) => pop[0]);
     bestSims.sort((a, b) => fitness(b) - fitness(a));
     const bestSim = bestSims[0];
     console.log(bestSim.printStatus());
+    console.log("Fitness: " + fitness(bestSim));
 }
 
 function fitness(sim: Simulation): number {
@@ -108,7 +93,7 @@ function fitness(sim: Simulation): number {
 
     let progPenalty = 0;
     if (sim.progress < sim.recipe.progress) {
-        progPenalty = sim.recipe.quality * .2 + (sim.progress - sim.recipe.progress) / sim.baseProgress() / 2;
+        progPenalty = sim.recipe.quality * .5 + (sim.recipe.progress - sim.progress);
     }
 
     const actionPenalty = sim.actionsUsed.length * sim.baseQuality() / 2;
@@ -162,7 +147,7 @@ function mutate(pop: any[][], mutProb: number): any[][] {
 }
 
 function mutate_indiv(individual: any[]): any[] {
-    const maxSubSeqLength: number = 3;
+    const maxSubSeqLength: number = 2;
     const seqLength: number = Math.min(individual.length, randInt(maxSubSeqLength + 1));
     const i: number = randInt(individual.length - seqLength + 1);
     individual.splice(i, seqLength, ...randomActionNameSeq(seqLength));

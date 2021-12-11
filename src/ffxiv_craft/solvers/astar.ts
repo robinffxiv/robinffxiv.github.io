@@ -1,15 +1,15 @@
 import PriorityQueue from "ts-priority-queue/src/PriorityQueue";
 import {Crafter, Recipe, Simulation} from "../simulation";
-import {getPossibleActions} from "../util";
+import {getPossibleActions, terminal} from "../util";
 
-export function tree(crafter: Crafter, recipe: Recipe): void {
+export function tree(crafter: Crafter, recipe: Recipe, heurWeight: number = 1): void {
 
     console.log("Started process");
 
     const startTime = new Date().getTime();
     const frontier = new PriorityQueue({comparator: (a: SimNode, b: SimNode) => a.priority() - b.priority()});
     const initialSim: Simulation = new Simulation(recipe, crafter);
-    frontier.queue(new SimNode(initialSim));
+    frontier.queue(new SimNode(initialSim, heurWeight));
 
     let iter: number = 0;
     let opt: SimNode | undefined = undefined;
@@ -32,8 +32,10 @@ export function tree(crafter: Crafter, recipe: Recipe): void {
             opt = currNode;
             break;
         }
-        for (const succNode of getSuccessorNodes(currNode.sim)) {
-            frontier.queue(succNode);
+        for (const succNode of getSuccessorNodes(currNode)) {
+            if (!terminal(succNode.sim) || goal_test(succNode.sim)) {
+                frontier.queue(succNode);
+            }
         }
 
     }
@@ -46,6 +48,7 @@ export function tree(crafter: Crafter, recipe: Recipe): void {
     }
     else {
         console.log(opt.sim.printStatus());
+        console.log(opt.priority());
     }
 
 
@@ -53,27 +56,29 @@ export function tree(crafter: Crafter, recipe: Recipe): void {
 
 class SimNode {
     readonly sim: Simulation;
-    constructor(sim: Simulation) {
+    readonly heurWeight: number;
+    constructor(sim: Simulation, heurWeight: number = 1) {
         this.sim = sim;
+        this.heurWeight = heurWeight;
     };
     priority(): number {
-        return this.cost() + heuristic(this.sim);
+        return this.cost() + heuristic(this.sim) * this.heurWeight;
     }
     cost(): number {
         return this.sim.actionsUsed.length;
     };
 }
 
-function getSuccessorNodes(sim: Simulation): SimNode[] {
-    return getPossibleActions(sim).map((a) => new SimNode(sim.apply(a)));
+function getSuccessorNodes(simNode: SimNode): SimNode[] {
+    return getPossibleActions(simNode.sim).map((a) => new SimNode(simNode.sim.apply(a), simNode.heurWeight));
 }
 
 
 function heuristic(sim: Simulation): number {
-    const qualLeft = sim.recipe.quality - sim.quality;
-    const estQualLeft = qualLeft / sim.baseQuality() / 600;
-    const progLeft = sim.recipe.progress - sim.progress;
-    const estProgLeft = progLeft / sim.baseProgress() / 600;
+    const qualLeft = Math.max(sim.recipe.quality - sim.quality, 0);
+    const estQualLeft = qualLeft / (sim.baseQuality() * 4);
+    const progLeft = Math.max(sim.recipe.progress - sim.progress, 0);
+    const estProgLeft = progLeft / (sim.baseProgress() * 4);
     const estAcsNeeded = estProgLeft + estQualLeft;
     const durNeeded = Math.floor(estAcsNeeded * 5 / sim.durability);
     return estAcsNeeded + durNeeded;

@@ -1,6 +1,7 @@
 import {Buff, Buffs} from "./buffs";
 import {Action} from "./actions";
 import {Data} from "dataclass";
+import {LEVEL_TABLE} from "./tables/rlvl";
 
 export class Crafter extends Data {
     lvl: number = 1;
@@ -11,12 +12,14 @@ export class Crafter extends Data {
 
 export class Recipe extends Data {
     name: string = "";
-    lvl: number = 0;
+    rlvl: number = 0;
     durability: number = 10;
     progress: number = 10;
     quality: number = 10;
     progressDivisor: number = 100;
     qualityDivisor: number = 100;
+    progressModifier: number = 100;
+    qualityModifier: number = 100;
 }
 
 export class Simulation {
@@ -58,28 +61,38 @@ export class Simulation {
         return newSim;
     };
 
-    printStatus(): string {
+    printStatus(verbose: boolean = true): string {
         let output = "Progress: " + this.progress +  " out of " + this.recipe.progress + "\n";
         output += "Quality: " + this.quality + " out of " + this.recipe.quality + "\n";
         output += "Durability: " + this.durability + " out of " + this.recipe.durability + "\n";
         output += "CP: " + this.cp + "\n";
-        output += "Actions used: \n";
-        for (const a of this.actionsUsed) {
-            output += a;
-            output += "\n";
-        }
-        for (const b in this.buffs) {
-            output += b + ": " + this.buffs[b as Buff] + "\n";
+        if (verbose) {
+            output += "Actions used: \n";
+            for (const a of this.actionsUsed) {
+                output += a;
+                output += "\n";
+            }
+            for (const b in this.buffs) {
+                output += b + ": " + this.buffs[b as Buff] + "\n";
+            }
         }
         return output;
     };
 
     baseProgress(): number {
-        return Math.floor(this.crafter.craftmanship * 10 / this.recipe.progressDivisor + 2);
+        const base = this.crafter.craftmanship * 10 / this.recipe.progressDivisor + 2;
+        if (LEVEL_TABLE[this.crafter.lvl] <= this.recipe.rlvl) {
+            return Math.floor(base * this.recipe.progressModifier / 100);
+        }
+        return Math.floor(base);
     };
 
     baseQuality(): number {
-        return Math.floor(this.crafter.control * 10 / this.recipe.qualityDivisor + 35);
+        const base = this.crafter.control * 10 / this.recipe.qualityDivisor + 35;
+        if (LEVEL_TABLE[this.crafter.lvl] <= this.recipe.rlvl) {
+            return Math.floor(base * this.recipe.qualityModifier / 100);
+        }
+        return Math.floor(base);
     };
 
     lastAction(): string {
