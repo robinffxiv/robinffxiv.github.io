@@ -1,39 +1,49 @@
 import axios from "axios";
 import {Action, Crafter, Recipe, Simulation} from "./ffxiv_craft";
-import {tree} from "./ffxiv_craft/solvers/astar";
+import {astar} from "./ffxiv_craft/solvers/astar";
+import {bfs} from "./ffxiv_craft/solvers/bfs"
 import {listToActions} from "./ffxiv_craft/util";
 import do_ea from "./ffxiv_craft/solvers/evo";
 
 
 export default async function testing_main() {
-    const crafter: Crafter = Crafter.create({lvl: 90, craftmanship: 3166, control: 2988, cp: 484});
-    const recipe: Recipe = await searchForRecipe("Integral Grinding Wheel");
-    const sim: Simulation = new Simulation(recipe, crafter);
+    const crafter: Crafter = Crafter.create({lvl: 83, craftmanship: 2769, control: 2806, cp: 560});
 
-    const actions = ["Muscle Memory",
-        "Groundwork",
-        "Groundwork",
-        "Waste Not II",
-        "Manipulation",
-        "Innovation",
-        "Preparatory Touch",
-        "Preparatory Touch",
-        "Preparatory Touch",
-        "Preparatory Touch",
-        "Preparatory Touch",
-        "Byregot's Blessing",
-        "Basic Synthesis"];
-    // printDebug(sim, actions);
-    const heurWeight = 5;
-    console.log(heurWeight);
-    // tree(crafter, recipe, heurWeight);
-    do_ea(crafter, recipe);
+    const rList = ["Copper Earrings",
+        "Slate Whetstone",
+        "Durium Ingot",
+        "Stonegold Nugget",
+        "Dwarven Mythril Rapier",
+        "Manganese Orrery",
+        "Exarchic Rod"]
+
+    for (const recName of rList) {
+        const recipe: Recipe = await searchForRecipe(recName);
+        do_ea(crafter, recipe)
+    }
+
+    const killerRecipe: Recipe = Recipe.create({
+        name: "Ultima Recipe",
+        rlvl: 514,
+        durability: 70,
+        progress: 4999,
+        quality: 9999,
+        progressDivisor: 110,
+        qualityDivisor: 90,
+        progressModifier: 80,
+        qualityModifier: 70
+    })
+
+    do_ea(crafter, killerRecipe)
+
+
 }
 
 async function searchForRecipe(keyword: string): Promise<Recipe> {
     const baseURL = "https://xivapi.com";
     let recipeURL, data;
-    const r1 = await axios.get(baseURL + "/search?indexes=recipe&string=" + keyword)
+    const r1 = await axios.get(baseURL + "/search?indexes=recipe&string=" + encodeURIComponent(keyword))
+    console.log(baseURL + "/search?indexes=recipe&string=" + encodeURIComponent(keyword))
     try {
         recipeURL = r1.data["Results"][0]["Url"];
         const r2 = await axios.get(baseURL + recipeURL)
@@ -42,9 +52,9 @@ async function searchForRecipe(keyword: string): Promise<Recipe> {
         const rlt = data["RecipeLevelTable"]
         return Recipe.create({name: data["Name"],
             rlvl: data["RecipeLevelTableTargetID"],
-            durability: rlt["Durability"],
-            progress: rlt["Difficulty"],
-            quality: rlt["Quality"],
+            durability: Math.floor(rlt["Durability"] * data["DurabilityFactor"] / 100),
+            progress: Math.floor(rlt["Difficulty"] * data["DifficultyFactor"] / 100),
+            quality: Math.floor(rlt["Quality"] * data["QualityFactor"] / 100),
             progressDivisor: rlt["ProgressDivider"],
             qualityDivisor: rlt["QualityDivider"],
             progressModifier: rlt["ProgressModifier"],

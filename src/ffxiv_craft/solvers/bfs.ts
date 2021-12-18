@@ -2,14 +2,14 @@ import PriorityQueue from "ts-priority-queue/src/PriorityQueue";
 import {Crafter, Recipe, Simulation} from "../simulation";
 import {getPossibleActions, terminal} from "../util";
 
-export function astar(crafter: Crafter, recipe: Recipe, heurWeight: number = 1): void {
+export function bfs(crafter: Crafter, recipe: Recipe): void {
 
     console.log("Started process");
 
     const startTime = new Date().getTime();
     const frontier = new PriorityQueue({comparator: (a: SimNode, b: SimNode) => a.priority() - b.priority()});
     const initialSim: Simulation = new Simulation(recipe, crafter);
-    frontier.queue(new SimNode(initialSim, heurWeight));
+    frontier.queue(new SimNode(initialSim));
 
     let iter: number = 0;
     let opt: SimNode | undefined = undefined;
@@ -56,13 +56,11 @@ export function astar(crafter: Crafter, recipe: Recipe, heurWeight: number = 1):
 
 class SimNode {
     readonly sim: Simulation;
-    readonly heurWeight: number;
-    constructor(sim: Simulation, heurWeight: number = 1) {
+    constructor(sim: Simulation) {
         this.sim = sim;
-        this.heurWeight = heurWeight;
     };
     priority(): number {
-        return this.cost() + heuristic(this.sim) * this.heurWeight;
+        return this.cost();
     }
     cost(): number {
         return this.sim.actionsUsed.length;
@@ -70,20 +68,8 @@ class SimNode {
 }
 
 function getSuccessorNodes(simNode: SimNode): SimNode[] {
-    return getPossibleActions(simNode.sim).map((a) => new SimNode(simNode.sim.apply(a), simNode.heurWeight));
+    return getPossibleActions(simNode.sim).map((a) => new SimNode(simNode.sim.apply(a)));
 }
-
-
-function heuristic(sim: Simulation): number {
-    const qualLeft = Math.max(sim.recipe.quality - sim.quality, 0);
-    const estQualLeft = qualLeft / (sim.baseQuality() * 4);
-    const progLeft = Math.max(sim.recipe.progress - sim.progress, 0);
-    const estProgLeft = progLeft / (sim.baseProgress() * 4);
-    const estAcsNeeded = estProgLeft + estQualLeft;
-    const durNeeded = Math.floor(((estAcsNeeded * 5) + sim.durability) / 40);
-    return estAcsNeeded + durNeeded;
-}
-
 
 function goal_test(sim: Simulation): boolean {
     return sim.quality >= sim.recipe.quality && sim.progress >= sim.recipe.progress

@@ -34,7 +34,7 @@ export default function do_ea(crafter: Crafter, recipe: Recipe) {
     let stuckCount: number = 0;
 
     // Go until we time out or break (by reaching the goal)
-    while (new Date().getTime() - startTime < 1000 * 600) {
+    while (new Date().getTime() - startTime < 1000 * 120) {
 
         // Sort individuals by fitness and drop the worst ones
         for (let n = 0; n < numPops; n++) {
@@ -82,6 +82,7 @@ export default function do_ea(crafter: Crafter, recipe: Recipe) {
     const bestSim = bestSims[0];
     console.log(bestSim.printStatus());
     console.log("Fitness: " + fitness(bestSim));
+    return (new Date().getTime() - startTime) / 1000;
 }
 
 function fitness(sim: Simulation): number {
